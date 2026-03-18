@@ -1,0 +1,62 @@
+pipeline {
+    agent any
+    environment {
+        BRANCH = '001-DEVELOPMENT'
+        BASE_DIR = '/home/projects'
+        PROFILE_EXTRACTION = "dataset-IA"
+        PROJECT_DIR_RENAMED = "${BASE_DIR}/${PROFILE_EXTRACTION}"
+        COMPOSE_FILE_WORKER="docker-compose.worker.yaml"
+        COMPOSE_FILE="docker-compose.yml"
+    }
+    stages {
+        stage('Fix SSH permissions') {
+            steps {
+                sh '''
+                  chown -R root:root /root/.ssh
+                  chmod 700 /root/.ssh
+                  chmod 600 /root/.ssh/id_rsa
+                  chmod 644 /root/.ssh/id_rsa.pub
+                  ssh-keyscan github.com >> /root/.ssh/known_hosts
+                '''
+            }
+        }
+
+        stage('Get project') {
+            steps {
+                sh """
+                rm -rf ${PROJECT_DIR_RENAMED}
+                mkdir -p ${PROJECT_DIR_RENAMED}
+                cd ${PROJECT_DIR_RENAMED}
+
+                git clone --depth=1 -b ${BRANCH} git@github.com:cimacorporate/dataset-IA.git .
+
+                ls -l
+                """
+            }
+        }
+
+        stage('Start services with Docker Compose') {
+            steps {
+                dir("${PROJECT_DIR_RENAMED}") {
+                    sh """
+                    docker compose -f docker-compose.worker.yaml up -d
+                    docker compose -f docker-compose.yml up -d
+
+                    """
+                }
+            }
+        }
+        stage('Run command in container') {
+            steps {
+                sh """
+                docker exec -d dataset-ia-worker-1 \
+                bash -c "python /app/worker.py"
+                sleep 40
+                
+                docker exec -d dataset-ia-api-1 \
+                bash -c "python api.py"
+                """
+            }
+        }
+    }
+}

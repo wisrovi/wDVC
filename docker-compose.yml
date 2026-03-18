@@ -1,0 +1,55 @@
+version: "3.8"
+
+services:
+  build_dvc:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USER_HOST: ${USER}
+        USER_EMAIL: ${EMAIL}
+        DVC_URL: ${DVC_URL}
+        DVC_USER: ${DVC_USER}
+        DVC_PASSWORD: ${DVC_PASSWORD}
+    command: tail -f /dev/null
+    image: cimacorporate/dvc:v1.1.0
+    env_file:
+      - ./config/git/git.env
+      - ./config/dvc/dvc.env
+
+  dataset_ia_data:
+    image: cimacorporate/dvc:v1.1.0
+    command: tail -f /dev/null
+    env_file:
+      - ./config/git/git.env
+      - ./config/dvc/dvc.env
+    volumes:
+      - ~/.ssh:/root/.ssh
+      - /etc/localtime:/etc/localtime:ro
+      - ./projects/:/app/projects
+      - ./.dvc/:/app/.dvc/
+      - ./.git:/app/.git/
+    depends_on:
+      - build_dvc
+
+  dvc-minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    restart: always
+    environment:
+      - MINIO_ROOT_USER=DVC
+      - MINIO_ROOT_PASSWORD=uTAntEMTuVpcJucNjOJm
+    ports:
+      - "30702:9000" # Port S3
+      - "30703:9001" # Admin port
+    volumes:
+      - ./DVC_data:/data
+
+  docs:
+    build:
+      context: .
+      dockerfile: Dockerfile.docs
+    ports:
+      - "8081:80"
+    depends_on:
+      - build_dvc

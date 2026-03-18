@@ -1,0 +1,5 @@
+stages:
+  example:
+    cmd: echo "Pipeline example - replace with your commands" > example_output.txt
+    outs:
+    - /app/example_output.txt

@@ -1,0 +1,31 @@
+# Build stage
+FROM python:3.10
+
+RUN apt-get update && apt-get install -y plantuml
+
+RUN plantuml -version
+
+RUN pip install sphinx \
+    sphinx_rtd_theme \
+    sphinxcontrib-plantuml \
+    sphinx furo \
+    sphinx-tabs \
+    sphinx-copybutton \
+    sphinx-design \
+    myst-parser
+
+COPY docs /docs
+
+WORKDIR /docs
+
+RUN sphinx-build -b html -D language=en . _build/html/en
+RUN sphinx-build -b html -D language=es . _build/html/es
+
+# Serve stage
+FROM nginx:alpine
+
+COPY --from=0 /docs/_build/html /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

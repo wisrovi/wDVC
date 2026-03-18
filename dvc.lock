@@ -1,0 +1,10 @@
+schema: '2.0'
+stages:
+  example:
+    cmd: echo "Pipeline example - replace with your commands" > 
+      example_output.txt
+    outs:
+    - path: example_output.txt
+      hash: md5
+      md5: 5ad8dced56c5511fea001fe111387ff1
+      size: 46

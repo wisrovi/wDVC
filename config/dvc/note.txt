@@ -1,0 +1,18 @@
+# dvc init
+
+dvc remote add -d  minio s3://datasets
+
+
+dvc remote modify minio endpointurl http://192.168.1.84:30702
+dvc remote modify minio access_key_id DVC
+dvc remote modify minio secret_access_key uTAntEMTuVpcJucNjOJm
+
+
+
+
+
+
+
+
+dvc remote add -d  minio s3://datasets --local
+

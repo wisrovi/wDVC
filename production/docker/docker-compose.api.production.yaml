@@ -1,0 +1,52 @@
+services:
+  redis:
+    image: redislabs/redismod
+    ports:
+      - "6379:6379"    
+    command: --dir /data --loadmodule /usr/lib/redis/modules/redistimeseries.so
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+      - HTTP_USER=root
+      - HTTP_PASSWORD=qwerty
+    ports:
+      - "4468:8081"
+    depends_on:
+      - redis 
+  
+  api:
+    image: wisrovi/dataset-ia:api-v1
+    ports:
+      - "4467:7860"
+    volumes:
+      - ../projects:/app/projects
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4g
+    restart: unless-stopped
+    # command: tail -f /dev/null
+    init: true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true" 
+  
+  watchtower:
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: always
+    environment:
+      - WATCHTOWER_LABEL_ENABLE=true
+      - WATCHTOWER_SCHEDULE=0 0 0,2,4,6,8,10,12,14,16,18,20,22 * * *
+      - WATCHTOWER_CLEANUP=true
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+

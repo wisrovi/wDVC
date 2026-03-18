@@ -1,0 +1,12 @@
+[Unit]
+Description=DatasetIA Worker Watchdog Stack (%I)
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/wisrovi/dvc
+ExecStart=/bin/bash /home/wisrovi/dvc/launcher_dvc.sh
+
+[Install]
+WantedBy=multi-user.target

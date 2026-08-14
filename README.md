@@ -243,6 +243,13 @@ When containers start, the following initialization sequence occurs:
 3. **Web Server**: Start Gradio on port 7860
 4. **Ready State**: UI available at exposed port
 
+### 4c. DVC Cache Optimization
+
+To ensure seamless dataset downloading via external bind mounts (`projects/`), the worker image explicitly enforces **Copy-based Caching**:
+- **Bypassing Link Errors**: DVC defaults to symlinks/hardlinks, which often fail across Docker's internal OverlayFS and host-mounted volumes.
+- **Enforced Copy Mode**: `dvc config cache.type copy` is executed during the image build, forcing real file copies to the `projects/` volume, preventing 0-byte or corrupt downloads during `dvc pull`.
+- **Pre-baked State**: The image bakes the `.dvc/` directory and lock files without executing destructive cleanup (`dvc gc`), ensuring a healthy state prior to runtime.
+
 ---
 
 ## 5. 📂 File-by-File Guide

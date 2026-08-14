@@ -3,8 +3,6 @@ SHELL ["bash", "-c"]
 
 WORKDIR /app
 
-
-
 RUN git config --global --add safe.directory /app && \
     git config --system --add safe.directory /app
 
@@ -19,18 +17,14 @@ RUN git config --global user.email "wrodriguez@ecapturedtech.com"
 RUN git config --global user.name "wrodriguez"
 RUN git checkout -b DEVELOPMENT
 RUN git add .
-RUN git commit -m "Eliminar archivos DVC conflictivos"
+RUN git commit -m "Commit base para inicializacion de DVC"
 
-
-# create example_output.txt
-RUN echo "example_output.txt" > example_output.txt
+# Configuracion CRITICA: Forzar el modo de caché a 'copy' 
+# Esto evita el error de "datos rotos" o "md5 falla" al enlazar el caché interno (.dvc/cache)
+# con un volumen externo montado (-v ./projects:/app/projects).
+RUN dvc config cache.type copy
 
 RUN apt update && apt install nload -y
-
-# dvc remove
-RUN dvc remove example
-RUN dvc gc --workspace -f
-
 COPY src/scripts/api/requirements.txt /app/requirements.txt
 RUN python -m pip install --no-cache-dir -r /app/requirements.txt
 
@@ -38,7 +32,6 @@ HEALTHCHECK --interval=5m --timeout=30s --start-period=2m --retries=3 \
     CMD CURRENT_SIZE=$(du -sb / --exclude=/app/projects --exclude=/proc --exclude=/sys --exclude=/dev | cut -f1); \
     LIMIT=$((50 * 1024 * 1024 * 1024)); \
     if [ "$CURRENT_SIZE" -gt "$LIMIT" ]; then exit 1; else exit 0; fi
-
 
 COPY worker.py /app/worker.py
 COPY src/ /app/src/

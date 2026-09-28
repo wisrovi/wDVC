@@ -1,5 +1,0 @@
-glob2
-dvc
-boto3
-dvc[s3]
-tqdm
